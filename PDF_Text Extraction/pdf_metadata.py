@@ -31,5 +31,10 @@ def save_json(data, output_path):
 
 if __name__ == "__main__":
     pdf_path = "sample.pdf"
+
     data = extract_pdf_metadata(pdf_path)
-    print(data)
+
+    # Save metadata into separate JSON file
+    save_json(data, "metadata_output.json")
+
+    print("Metadata JSON file created successfully!")
