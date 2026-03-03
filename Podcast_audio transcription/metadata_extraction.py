@@ -1,17 +1,7 @@
 import os
 import json
 import subprocess
-import requests
 import yt_dlp
-from dotenv import load_dotenv
-
-# Load API Key
-load_dotenv()
-DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
-
-if not DEEPGRAM_API_KEY:
-    print("Deepgram API key not found in .env")
-    exit()
 
 
 # ---------------------------------------
@@ -109,64 +99,7 @@ def save_metadata(youtube_meta, audio_meta):
 
 
 # ---------------------------------------
-# CONVERT TO MONO 16kHz WAV
-# ---------------------------------------
-def convert_to_mono(mp3_path):
-    output_file = "processed_audio.wav"
-
-    command = [
-        "ffmpeg",
-        "-y",
-        "-i", mp3_path,
-        "-ac", "1",
-        "-ar", "16000",
-        output_file
-    ]
-
-    subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return output_file
-
-
-# ---------------------------------------
-# DEEPGRAM TRANSCRIPTION
-# ---------------------------------------
-def transcribe_with_deepgram(audio_path):
-    url = "https://api.deepgram.com/v1/listen?model=nova-2&punctuate=true"
-
-    headers = {
-        "Authorization": f"Token {DEEPGRAM_API_KEY}",
-        "Content-Type": "audio/wav"
-    }
-
-    with open(audio_path, "rb") as audio:
-        response = requests.post(url, headers=headers, data=audio)
-
-    if response.status_code != 200:
-        print("Deepgram Error:", response.text)
-        return None
-
-    result = response.json()
-    transcript = result["results"]["channels"][0]["alternatives"][0]["transcript"]
-
-    return transcript
-
-
-# ---------------------------------------
-# SAVE TRANSCRIPTION.JSON
-# ---------------------------------------
-def save_transcription(text):
-    data = {
-        "transcription": text
-    }
-
-    with open("transcription.json", "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4)
-
-    print("transcription.json created")
-
-
-# ---------------------------------------
-# MAIN PIPELINE
+# MAIN
 # ---------------------------------------
 def main():
     youtube_url = input("Enter YouTube URL: ")
@@ -188,17 +121,7 @@ def main():
 
     save_metadata(youtube_metadata, audio_metadata)
 
-    print("Converting to mono...")
-    processed_audio = convert_to_mono(mp3_file)
-
-    print("Transcribing with Deepgram...")
-    transcript = transcribe_with_deepgram(processed_audio)
-
-    if transcript:
-        save_transcription(transcript)
-        print("Process completed successfully")
-    else:
-        print("Transcription failed")
+    print("Metadata extraction completed successfully")
 
 
 if __name__ == "__main__":
