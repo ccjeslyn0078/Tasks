@@ -1,23 +1,28 @@
-import httpx
+import assemblyai as aai
+import os
 
-API_KEY = "75ebd84e2b4120c5fb80e8d2416a2b49fcbcb01c"
+aai.settings.api_key = os.getenv("ASSEMBLYAI_API_KEY")
 
+def transcribe_audio(file_path):
 
-async def transcribe_audio(file_path):
+    config = aai.TranscriptionConfig(
+        speaker_labels=True,
+        speech_models=["universal-2"]
+    )
 
-    url = "https://api.deepgram.com/v1/listen"
+    transcriber = aai.Transcriber()
 
-    headers = {
-        "Authorization": f"Token {API_KEY}",
-        "Content-Type": "audio/mp3"
-    }
+    transcript = transcriber.transcribe(file_path, config)
 
-    with open(file_path, "rb") as f:
-        audio = f.read()
+    segments = []
 
-    async with httpx.AsyncClient() as client:
-        response = await client.post(url, headers=headers, content=audio)
+    for utterance in transcript.utterances:
 
-    result = response.json()
+        segments.append({
+            "speaker": f"Speaker {utterance.speaker}",
+            "start": utterance.start / 1000,
+            "end": utterance.end / 1000,
+            "text": utterance.text
+        })
 
-    return result["results"]["channels"][0]["alternatives"][0]["transcript"]
+    return segments
