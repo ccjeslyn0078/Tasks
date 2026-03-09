@@ -1,4 +1,3 @@
-
 from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -9,6 +8,8 @@ from mistral_ocr import extract_pdf
 from transcription import transcribe_audio
 
 app = FastAPI()
+
+last_pdf_result = {}
 
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -40,17 +41,27 @@ async def upload(file: UploadFile = File(...)):
 
         text = extract_pdf(file_path)
 
-        return {
-            "type": "pdf",
+        global last_pdf_result
+        last_pdf_result = {
             "pdf_url": f"/uploads/{file.filename}",
             "content": text
         }
 
+        return {
+            "type": "pdf"
+        }
+
     elif file.filename.endswith(".mp3"):
 
-        transcript = await transcribe_audio(file_path)
+        transcript = transcribe_audio(file_path)
 
         return {
             "type": "mp3",
+            "audio_url": f"/uploads/{file.filename}",
             "content": transcript
         }
+
+
+@app.get("/upload_result")
+def get_pdf_result():
+    return last_pdf_result
